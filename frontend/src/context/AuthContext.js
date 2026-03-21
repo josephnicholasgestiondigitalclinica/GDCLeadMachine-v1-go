@@ -24,15 +24,18 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (email, password) => {
-    // Mock login
-    const mockUser = {
-      email,
-      name: email.split('@')[0],
-      id: '1'
-    };
-    setUser(mockUser);
-    localStorage.setItem('user', JSON.stringify(mockUser));
-    return Promise.resolve(mockUser);
+    // Simple admin login
+    if (email.toLowerCase() === 'admin' && password === 'Admin') {
+      const adminUser = {
+        email: 'admin',
+        name: 'Administrator',
+        id: 'admin'
+      };
+      setUser(adminUser);
+      localStorage.setItem('user', JSON.stringify(adminUser));
+      return Promise.resolve(adminUser);
+    }
+    return Promise.reject(new Error('Invalid credentials'));
   };
 
   const signup = (email, password) => {

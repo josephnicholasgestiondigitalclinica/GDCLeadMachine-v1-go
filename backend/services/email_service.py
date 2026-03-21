@@ -97,8 +97,6 @@ class EmailService:
         </div>
         
         <div class="content">
-            <p><strong>Asunto:</strong> Sistema integral para centralizar la operativa de {clinic_name}</p>
-            
             <p>Hola equipo de {clinic_name},</p>
             
             <p>Soy {self.business_info['owner']}, de {self.business_info['name']}.</p>

@@ -85,13 +85,14 @@ class AIScoringService:
             }
     
     async def _score_email(self, email: str) -> tuple:
-        """Score email address"""
+        """Score email address - lenient validation to avoid false negatives"""
         score = 0
         details = []
         
         try:
-            # Validate email format
-            validation = validate_email(email, check_deliverability=True)
+            # Basic email format validation only (no deliverability check)
+            # Deliverability checks are too strict and reject valid emails
+            validation = validate_email(email, check_deliverability=False)
             email = validation.normalized
             score += 3
             details.append("Email válido (+3)")
@@ -106,12 +107,17 @@ class AIScoringService:
                 details.append(f"Email personal ({domain}) (+3 - buen prospecto)")
             
             # Bonus for generic emails (info@, contacto@)
-            if email.startswith(("info@", "contacto@", "admin@")):
+            if email.startswith(("info@", "contacto@", "admin@", "recepcion@", "clinica@")):
                 score += 1
                 details.append("Email genérico (+1)")
             
         except EmailNotValidError as e:
-            details.append(f"Email no válido: {str(e)}")
+            # Even if validation fails, give partial score if format looks reasonable
+            if "@" in email and "." in email.split("@")[-1]:
+                score += 2
+                details.append(f"Email con formato básico válido (+2)")
+            else:
+                details.append(f"Email no válido: {str(e)}")
         
         return score, details
     

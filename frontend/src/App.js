@@ -3,8 +3,6 @@ import { AuthProvider } from './context/AuthContext';
 import { Toaster } from './components/ui/sonner';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
-import Signup from './pages/Signup';
-import VerifyEmail from './pages/VerifyEmail';
 import Dashboard from './pages/Dashboard';
 import Leads from './pages/Leads';
 import Prospeccion from './pages/Prospeccion';
@@ -19,8 +17,6 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/verify-email" element={<VerifyEmail />} />
           
           {/* Protected Routes */}
           <Route

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Target, Mail, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, Target, Mail, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Button } from './ui/button';
 
@@ -23,10 +23,10 @@ const Layout = ({ children }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-white">
       {/* Top Navigation */}
-      <nav className="bg-[#1e3a5f] border-b border-[#17a2b8]/20">
-        <div className="container mx-auto px-6">
+      <nav className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+        <div className="container mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <div className="flex items-center gap-3">
@@ -36,13 +36,13 @@ const Layout = ({ children }) => {
                 className="h-10 w-auto"
               />
               <div className="hidden sm:block">
-                <div className="text-white font-bold text-sm">GESTIÓN</div>
+                <div className="text-slate-900 font-bold text-sm">GESTIÓN</div>
                 <div className="text-[#17a2b8] font-bold text-xs -mt-1">DIGITAL CLÍNICA</div>
               </div>
             </div>
 
-            {/* Nav Items */}
-            <div className="flex items-center gap-1">
+            {/* Nav Items - Desktop */}
+            <div className="hidden md:flex items-center gap-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
@@ -50,14 +50,14 @@ const Layout = ({ children }) => {
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                       isActive
-                        ? 'bg-[#17a2b8] text-white shadow-lg shadow-[#17a2b8]/50'
-                        : 'text-slate-300 hover:text-white hover:bg-[#1e3a5f]/80'
+                        ? 'bg-[#17a2b8] text-white shadow-md'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
-                    <span className="hidden md:inline">{item.label}</span>
+                    {item.label}
                   </Link>
                 );
               })}
@@ -68,16 +68,39 @@ const Layout = ({ children }) => {
               onClick={handleLogout}
               variant="ghost"
               size="sm"
-              className="text-slate-300 hover:text-white hover:bg-[#1e3a5f]/80"
+              className="text-slate-600 hover:text-slate-900 hover:bg-slate-50"
             >
-              Logout
+              <LogOut className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Logout</span>
             </Button>
+          </div>
+
+          {/* Nav Items - Mobile */}
+          <div className="md:hidden flex items-center gap-1 overflow-x-auto pb-3 -mx-2 px-2">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                    isActive
+                      ? 'bg-[#17a2b8] text-white'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </nav>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-8">
+      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {children}
       </main>
     </div>
