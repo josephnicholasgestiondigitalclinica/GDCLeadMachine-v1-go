@@ -1,6 +1,8 @@
 # 🚀 GDC LeadMachine - Railway Deployment Guide
 
-Sistema automatizado de gestión de leads para clínicas veterinarias en España.
+Sistema automatizado de gestión de leads para clínicas de salud en España.
+
+**Especialidades:** Clínicas Dentales, Fisioterapia, Oftalmología, Dermatología, Psicología, Centros Médicos, Veterinaria
 
 ## 📋 Pre-requisitos
 

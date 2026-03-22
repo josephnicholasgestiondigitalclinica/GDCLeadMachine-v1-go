@@ -1,6 +1,7 @@
 # ✅ Emergent Deployment - Ready to Deploy
 
-**App:** GDC LeadMachine - Lead Management System for Veterinary Clinics  
+**App:** GDC LeadMachine - Lead Management System for Healthcare Clinics  
+**Specialties:** Dental, Physiotherapy, Ophthalmology, Dermatology, Psychology, Medical Centers, Veterinary  
 **Date:** March 22, 2025  
 **Status:** 🟢 READY FOR DEPLOYMENT
 
@@ -79,12 +80,21 @@ Once deployed, verify:
 
 ## 📊 What the App Does
 
-**GDC LeadMachine** is an automated lead management system that:
+**GDC LeadMachine** is an automated lead management system for **healthcare clinics** across Spain that:
+
+### Supported Healthcare Specialties:
+- 🦷 Clínicas Dentales (Dental clinics)
+- 💪 Fisioterapia (Physiotherapy)
+- 👁️ Oftalmología (Ophthalmology)
+- 🩺 Dermatología (Dermatology)
+- 🐕 Veterinaria (Veterinary)
+- 🧠 Psicología (Psychology)
+- 🏥 Centros Médicos (Medical centers)
 
 1. **Lead Management** 📋
-   - Import veterinary clinic leads via CSV
+   - Import healthcare clinic leads via CSV
    - Store and organize clinic data in MongoDB
-   - Track lead status and interactions
+   - Track lead status and interactions across all specialties
 
 2. **AI-Powered Scoring** 🤖
    - Automatically scores leads using GPT-4o-mini
@@ -144,7 +154,7 @@ The app uses **2 email accounts** for sending outreach:
 3. **Import Real Leads**:
    - Go to "Importar" tab
    - Download CSV template
-   - Upload file with real veterinary clinic data
+   - Upload file with healthcare clinics (dental, physiotherapy, psychology, medical centers, etc.)
 4. **Monitor Dashboard**:
    - Watch leads get auto-scored by AI
    - Check email queue in Config tab
