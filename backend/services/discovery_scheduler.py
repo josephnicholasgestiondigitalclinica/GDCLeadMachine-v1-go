@@ -85,18 +85,28 @@ class DiscoveryScheduler:
             self.is_running = False
     
     def start(self):
-        """Start the discovery scheduler - runs every 6 hours"""
-        # Run discovery every 6 hours (more respectful)
+        """Start the discovery scheduler - DISABLED until real data source is configured"""
+        # DISABLED: Auto-discovery is turned OFF
+        # Reason: Prevents fake/mock data generation
+        # To enable: Configure real data sources (CSV import, manual leads, verified APIs)
+        
+        logger.warning("="*60)
+        logger.warning("⚠️  AUTO-DISCOVERY DISABLED")
+        logger.warning("⚠️  No automatic lead generation")
+        logger.warning("⚠️  Import real data via CSV or manual entry")
+        logger.warning("="*60)
+        
+        # Do NOT start scheduler
+        # self.scheduler.start()
+        
+    def start_when_ready(self):
+        """Call this method manually when real data sources are configured"""
         self.scheduler.add_job(
             self.run_discovery_cycle,
             IntervalTrigger(hours=6),
             id='real_lead_discovery',
             replace_existing=True
         )
-        
-        # DON'T run immediately on startup - only scheduled
-        # This prevents auto-scraping on every restart
-        
         self.scheduler.start()
         logger.info("REAL Lead discovery scheduler started - running every 6 hours")
     

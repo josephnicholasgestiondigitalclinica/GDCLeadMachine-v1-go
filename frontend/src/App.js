@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Leads from './pages/Leads';
+import ImportLeads from './pages/ImportLeads';
 import Prospeccion from './pages/Prospeccion';
 import Outreach from './pages/Outreach';
 import Config from './pages/Config';
@@ -32,6 +33,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Leads />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/import"
+            element={
+              <ProtectedRoute>
+                <ImportLeads />
               </ProtectedRoute>
             }
           />

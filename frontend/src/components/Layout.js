@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Target, Mail, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, Target, Mail, Settings, LogOut, Upload } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Button } from './ui/button';
 
@@ -17,6 +17,7 @@ const Layout = ({ children }) => {
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/leads', label: 'Leads', icon: Users },
+    { path: '/import', label: 'Importar', icon: Upload },
     { path: '/prospeccion', label: 'Prospección', icon: Target },
     { path: '/outreach', label: 'Outreach', icon: Mail },
     { path: '/config', label: 'Config', icon: Settings }
