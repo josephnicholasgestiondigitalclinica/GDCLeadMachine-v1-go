@@ -1,0 +1,19 @@
+{
+  "phases": {
+    "setup": {
+      "nixPkgs": ["python311", "nodejs-18_x", "yarn"],
+      "aptPkgs": []
+    },
+    "install": {
+      "cmds": [
+        "cd backend && pip install -r requirements.txt",
+        "cd frontend && yarn install"
+      ]
+    },
+    "build": {
+      "cmds": [
+        "cd frontend && yarn build"
+      ]
+    }
+  }
+}
