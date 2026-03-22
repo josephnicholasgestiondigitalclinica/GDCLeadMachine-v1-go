@@ -48,8 +48,19 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 # Initialize services
+from services.contact_history_service import ContactHistoryService
+from services.whatsapp_queue_service import WhatsAppQueueService
+
 email_queue_service_instance = EmailQueueService(db)
-automation_service.initialize(db, email_queue_service_instance)
+whatsapp_queue_service_instance = WhatsAppQueueService(db)
+contact_history_service_instance = ContactHistoryService(db)
+
+automation_service.initialize(
+    db, 
+    email_queue_service_instance,
+    whatsapp_queue_service_instance,
+    contact_history_service_instance
+)
 discovery_scheduler_instance = DiscoveryScheduler(automation_service, db)
 
 # Create the main app
@@ -372,6 +383,86 @@ async def get_discovery_status():
         "scheduler_running": discovery_scheduler_instance.scheduler.running
     }
 
+
+# Contact History endpoints
+@api_router.get("/contacts/history/{clinic_id}")
+async def get_clinic_contact_history(clinic_id: str, method: Optional[str] = None):
+    """Get contact history for a specific clinic"""
+    try:
+        history = await contact_history_service_instance.get_contact_history(
+            clinic_id=clinic_id,
+            method=method
+        )
+        
+        stats = await contact_history_service_instance.get_clinic_stats(clinic_id)
+        
+        return {
+            "clinic_id": clinic_id,
+            "history": history,
+            "stats": stats
+        }
+    except Exception as e:
+        logger.error(f"Error getting contact history: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/contacts/summary")
+async def get_contacts_summary():
+    """Get overall contact statistics"""
+    try:
+        summary = await contact_history_service_instance.get_all_contacts_summary()
+        
+        # Get queue stats
+        email_stats = {
+            "pending": await db.email_queue.count_documents({"status": "pending"}),
+            "sent": await db.email_queue.count_documents({"status": "sent"}),
+            "failed": await db.email_queue.count_documents({"status": "failed"})
+        }
+        
+        whatsapp_stats = await whatsapp_queue_service_instance.get_queue_stats()
+        
+        return {
+            "contact_summary": summary,
+            "email_queue": email_stats,
+            "whatsapp_queue": whatsapp_stats
+        }
+    except Exception as e:
+        logger.error(f"Error getting contacts summary: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/contacts/recent")
+async def get_recent_contacts(limit: int = 50, method: Optional[str] = None):
+    """Get recent contact attempts across all clinics"""
+    try:
+        query = {}
+        if method:
+            query["method"] = method
+        
+        projection = {
+            "clinic_id": 1,
+            "method": 1,
+            "status": 1,
+            "timestamp": 1,
+            "date": 1,
+            "time": 1,
+            "details": 1
+        }
+        
+        contacts = await db.contact_history.find(
+            query,
+            projection
+        ).sort("timestamp", -1).limit(limit).to_list(limit)
+        
+        # Convert ObjectIds
+        contacts = convert_objectids(contacts)
+        
+        return {
+            "contacts": contacts,
+            "count": len(contacts)
+        }
+    except Exception as e:
+        logger.error(f"Error getting recent contacts: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Include router
 app.include_router(api_router)
 
@@ -394,6 +485,9 @@ async def startup_event():
     try:
         logger.info("Creating database indexes...")
         await db.email_queue.create_index([("status", 1), ("attempts", 1)])
+        await db.whatsapp_queue.create_index([("status", 1), ("attempts", 1)])
+        await db.contact_history.create_index([("clinic_id", 1), ("timestamp", -1)])
+        await db.contact_history.create_index([("method", 1), ("status", 1)])
         await db.clinics.create_index([("comunidad_autonoma", 1)])
         await db.clinics.create_index([("score", 1)])
         await db.clinics.create_index([("estado", 1)])
@@ -404,15 +498,20 @@ async def startup_event():
     email_queue_service_instance.start()
     logger.info("Email queue processor started - sending 1 email per 120 seconds per account")
     
+    # Start WhatsApp queue processor
+    whatsapp_queue_service_instance.start()
+    logger.info("WhatsApp queue processor started - sending 1 message per 60 seconds")
+    
     # Start lead discovery scheduler
     discovery_scheduler_instance.start()
     logger.info("Lead discovery scheduler started - running every 2 hours")
-    logger.info("System ready: Automated lead discovery → AI scoring → Email sending")
+    logger.info("System ready: Automated lead discovery → AI scoring → Email + WhatsApp sending with contact history tracking")
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Stop email queue processor and discovery scheduler on shutdown"""
     email_queue_service_instance.stop()
+    whatsapp_queue_service_instance.stop()
     discovery_scheduler_instance.stop()
     client.close()
     logger.info("Shutdown complete")

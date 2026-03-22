@@ -90,6 +90,7 @@ class EmailQueueService:
         """Process email queue - called by scheduler"""
         from services.email_service import email_service
         from services.notion_service import notion_service
+        from services.contact_history_service import contact_history_service
         
         try:
             # Get next account available to send
@@ -118,6 +119,7 @@ class EmailQueueService:
                 return
             
             clinic_data = pending_email["clinic_data"]
+            clinic_id = pending_email["clinic_id"]
             
             # Send email
             success = await email_service.send_email(
@@ -141,17 +143,18 @@ class EmailQueueService:
                     }
                 )
                 
-                # Update clinic in MongoDB
-                await self.db.clinics.update_one(
-                    {"_id": pending_email["clinic_id"]},
-                    {
-                        "$set": {
-                            "estado": "Email enviado",
-                            "email_sent": True,
-                            "last_email_date": datetime.utcnow().isoformat()
+                # Record in contact history
+                if contact_history_service:
+                    await contact_history_service.record_contact(
+                        clinic_id=clinic_id,
+                        method="email",
+                        status="sent",
+                        details={
+                            "from_email": account["username"],
+                            "to_email": clinic_data["email"],
+                            "clinic_name": clinic_data["clinica"]
                         }
-                    }
-                )
+                    )
                 
                 # Update account last_sent time
                 account["last_sent"] = datetime.utcnow()
@@ -166,6 +169,20 @@ class EmailQueueService:
                         "$set": {"last_attempt": datetime.utcnow()}
                     }
                 )
+                
+                # Record failed attempt
+                if contact_history_service:
+                    await contact_history_service.record_contact(
+                        clinic_id=clinic_id,
+                        method="email",
+                        status="failed",
+                        details={
+                            "from_email": account["username"],
+                            "to_email": clinic_data["email"],
+                            "attempt": pending_email["attempts"] + 1
+                        }
+                    )
+                
                 logger.warning(f"Failed to send email to {clinic_data['clinica']}, attempt {pending_email['attempts'] + 1}")
                 
         except Exception as e:
