@@ -303,11 +303,11 @@ async def get_dashboard_stats():
 
 @api_router.post("/discovery/trigger")
 async def trigger_discovery():
-    """Manually trigger lead discovery"""
+    """Manually trigger REAL lead discovery with web scraping"""
     try:
         # Run discovery in background
         asyncio.create_task(discovery_scheduler_instance.run_discovery_cycle())
-        return {"message": "Lead discovery triggered", "status": "running"}
+        return {"message": "REAL lead discovery triggered (web scraping)", "status": "running"}
     except Exception as e:
         logger.error(f"Error triggering discovery: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
