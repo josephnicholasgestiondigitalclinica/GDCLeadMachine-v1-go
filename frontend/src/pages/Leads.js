@@ -1,69 +1,69 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Sparkles, Download, Upload, Plus, Search, ExternalLink } from 'lucide-react';
-import { allMockLeads } from '../data/mockLeads';
+import { Search, Phone, Mail, ExternalLink, MessageSquare } from 'lucide-react';
+import { getClinics } from '../services/api';
 
 const Leads = () => {
+  const [leads, setLeads] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [scoreFilter, setScoreFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
 
-  const filteredLeads = allMockLeads.filter(lead => {
-    const matchesSearch = lead.clinica.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          lead.ciudad.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          lead.email.toLowerCase().includes(searchQuery.toLowerCase());
+  useEffect(() => {
+    loadLeads();
+  }, []);
+
+  const loadLeads = async () => {
+    try {
+      const data = await getClinics(0, 100);
+      setLeads(data.clinics || []);
+    } catch (error) {
+      console.error('Error loading leads:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredLeads = leads.filter(lead => {
+    const matchesSearch = lead.clinica?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          lead.ciudad?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          lead.email?.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || lead.estado === statusFilter;
     const matchesScore = scoreFilter === 'all' || 
                          (scoreFilter === '7+' && lead.score && lead.score >= 7) ||
-                         (scoreFilter === '8+' && lead.score && lead.score >= 8) ||
-                         (scoreFilter === '9+' && lead.score && lead.score >= 9);
+                         (scoreFilter === '5-6' && lead.score && lead.score >= 5 && lead.score < 7) ||
+                         (scoreFilter === '<5' && lead.score && lead.score < 5);
     
     return matchesSearch && matchesStatus && matchesScore;
   });
 
-  const leadsWithScore = allMockLeads.filter(l => l.score && l.score >= 7).length;
+  const sendWhatsApp = (phone, clinicName) => {
+    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    const message = encodeURIComponent(`Hola ${clinicName}, soy José Cabrejas de Gestión Digital Clínica. ¿Tienes un momento para hablar sobre cómo podemos ayudar a tu clínica?`);
+    window.open(`https://wa.me/34${cleanPhone}?text=${message}`, '_blank');
+  };
 
   return (
     <Layout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Leads</h1>
-            <p className="text-slate-400 text-sm">{allMockLeads.length} clínicas en base de datos</p>
-          </div>
-          <div className="flex gap-3">
-            <Button className="bg-[#17a2b8] hover:bg-[#138a9d] text-white font-medium shadow-lg shadow-[#17a2b8]/30">
-              <Sparkles className="w-4 h-4 mr-2" />
-              Analizar con IA
-              <span className="ml-2 bg-white/20 text-white px-2 py-0.5 rounded text-xs font-bold">
-                {leadsWithScore}
-              </span>
-            </Button>
-            <Button variant="outline" className="border-emerald-500 text-emerald-400 hover:bg-emerald-500/10">
-              <Download className="w-4 h-4 mr-2" />
-              Exportar para envío
-            </Button>
-            <Button variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-800">
-              <Upload className="w-4 h-4 mr-2" />
-              Importar
-            </Button>
-            <Button className="bg-[#17a2b8] hover:bg-[#138a9d] text-white font-medium shadow-lg shadow-[#17a2b8]/30">
-              <Plus className="w-4 h-4 mr-2" />
-              Nuevo Lead
-            </Button>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Leads</h1>
+            <p className="text-slate-600 text-sm">{leads.length} clínicas en base de datos</p>
           </div>
         </div>
 
         {/* Filters */}
-        <Card className="bg-[#1e3a5f]/50 border-[#17a2b8]/20 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex gap-4 items-center">
+        <Card className="bg-white border-slate-200 shadow-sm">
+          <CardContent className="p-4">
+            <div className="flex flex-col lg:flex-row gap-4">
               {/* Search */}
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -71,36 +71,34 @@ const Leads = () => {
                   placeholder="Buscar clínica, ciudad, email..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                  className="pl-10 bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-[#17a2b8] focus:ring-[#17a2b8]"
                 />
               </div>
 
               {/* Status Filter */}
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[200px] bg-slate-800 border-slate-700 text-white">
+                <SelectTrigger className="w-full lg:w-[200px] bg-white border-slate-300 text-slate-900">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="all" className="text-white">Todos</SelectItem>
-                  <SelectItem value="Sin contactar" className="text-white">Sin contactar</SelectItem>
-                  <SelectItem value="Email enviado" className="text-white">Email enviado</SelectItem>
-                  <SelectItem value="Respondió" className="text-white">Respondió</SelectItem>
-                  <SelectItem value="Llamada programada" className="text-white">Llamada programada</SelectItem>
-                  <SelectItem value="Cliente" className="text-white">Cliente</SelectItem>
-                  <SelectItem value="Descartado" className="text-white">Descartado</SelectItem>
+                <SelectContent className="bg-white border-slate-200">
+                  <SelectItem value="all">Todos los estados</SelectItem>
+                  <SelectItem value="Sin contactar">Sin contactar</SelectItem>
+                  <SelectItem value="Email enviado">Email enviado</SelectItem>
+                  <SelectItem value="Respondió">Respondió</SelectItem>
+                  <SelectItem value="Cliente">Cliente</SelectItem>
                 </SelectContent>
               </Select>
 
               {/* Score Filter */}
               <Select value={scoreFilter} onValueChange={setScoreFilter}>
-                <SelectTrigger className="w-[200px] bg-slate-800 border-slate-700 text-white">
+                <SelectTrigger className="w-full lg:w-[200px] bg-white border-slate-300 text-slate-900">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="all" className="text-white">Todos los scores</SelectItem>
-                  <SelectItem value="7+" className="text-white">Score ≥ 7</SelectItem>
-                  <SelectItem value="8+" className="text-white">Score ≥ 8</SelectItem>
-                  <SelectItem value="9+" className="text-white">Score ≥ 9</SelectItem>
+                <SelectContent className="bg-white border-slate-200">
+                  <SelectItem value="all">Todos los scores</SelectItem>
+                  <SelectItem value="7+">Score 7+</SelectItem>
+                  <SelectItem value="5-6">Score 5-6</SelectItem>
+                  <SelectItem value="<5">Score menor a 5</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -108,62 +106,86 @@ const Leads = () => {
         </Card>
 
         {/* Leads Table */}
-        <Card className="bg-[#1e3a5f]/50 border-[#17a2b8]/20 backdrop-blur-sm">
+        <Card className="bg-white border-slate-200 shadow-sm">
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-[#17a2b8]/20">
-                    <th className="text-left py-4 px-6 text-xs font-medium text-slate-400 uppercase">CLÍNICA</th>
-                    <th className="text-left py-4 px-6 text-xs font-medium text-slate-400 uppercase">CIUDAD</th>
-                    <th className="text-left py-4 px-6 text-xs font-medium text-slate-400 uppercase">EMAIL</th>
-                    <th className="text-left py-4 px-6 text-xs font-medium text-slate-400 uppercase">SCORE</th>
-                    <th className="text-left py-4 px-6 text-xs font-medium text-slate-400 uppercase">ESTADO</th>
-                    <th className="text-left py-4 px-6 text-xs font-medium text-slate-400 uppercase">ACCIONES</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredLeads.map((lead) => (
-                    <tr key={lead.id} className="border-b border-[#17a2b8]/10 hover:bg-[#17a2b8]/10 transition-colors">
-                      <td className="py-4 px-6">
-                        <div>
-                          <div className="text-white text-sm font-medium">{lead.clinica}</div>
-                          <div className="text-slate-500 text-xs mt-0.5">{lead.telefono}</div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6 text-slate-300 text-sm">{lead.ciudad}</td>
-                      <td className="py-4 px-6 text-slate-400 text-sm">{lead.email}</td>
-                      <td className="py-4 px-6">
-                        <span className={`text-sm ${
-                          lead.score 
-                            ? lead.score >= 8 ? 'text-emerald-400' : 'text-[#17a2b8]'
-                            : 'text-slate-500'
-                        }`}>
-                          {lead.score ? `${lead.score}/10` : 'sin score'}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-slate-800/50 text-slate-400 border border-[#17a2b8]/30">
-                          Sin contactar
-                        </span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <button className="text-slate-400 hover:text-[#17a2b8] transition-colors">
-                          <ExternalLink className="w-4 h-4" />
-                        </button>
-                      </td>
+            {loading ? (
+              <div className="text-center py-12 text-slate-500">Cargando leads...</div>
+            ) : filteredLeads.length === 0 ? (
+              <div className="text-center py-12 text-slate-500">No hay leads</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                      <th className="text-left py-4 px-6 text-xs font-semibold text-slate-700 uppercase tracking-wide">Clínica</th>
+                      <th className="hidden md:table-cell text-left py-4 px-6 text-xs font-semibold text-slate-700 uppercase tracking-wide">Ciudad</th>
+                      <th className="hidden lg:table-cell text-left py-4 px-6 text-xs font-semibold text-slate-700 uppercase tracking-wide">Email</th>
+                      <th className="text-left py-4 px-6 text-xs font-semibold text-slate-700 uppercase tracking-wide">Score</th>
+                      <th className="text-right py-4 px-6 text-xs font-semibold text-slate-700 uppercase tracking-wide">Acciones</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            
-            {/* Pagination Info */}
-            <div className="p-4 border-t border-[#17a2b8]/20 text-center">
-              <p className="text-sm text-slate-400">
-                {filteredLeads.length} de {allMockLeads.length} leads
-              </p>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredLeads.map((lead, index) => (
+                      <tr key={index} className="hover:bg-slate-50 transition-colors">
+                        <td className="py-4 px-6">
+                          <div className="font-semibold text-slate-900">{lead.clinica}</div>
+                          <div className="text-sm text-slate-600 md:hidden">{lead.ciudad}</div>
+                          <div className="text-sm text-slate-600 lg:hidden">{lead.email}</div>
+                        </td>
+                        <td className="hidden md:table-cell py-4 px-6 text-slate-700">{lead.ciudad}</td>
+                        <td className="hidden lg:table-cell py-4 px-6 text-slate-700">{lead.email}</td>
+                        <td className="py-4 px-6">
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold ${
+                            lead.score >= 7 ? 'bg-emerald-100 text-emerald-800' :
+                            lead.score >= 5 ? 'bg-amber-100 text-amber-800' :
+                            'bg-slate-100 text-slate-800'
+                          }`}>
+                            {lead.score || 'N/A'}/10
+                          </span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="flex justify-end gap-2">
+                            {lead.telefono && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => sendWhatsApp(lead.telefono, lead.clinica)}
+                                className="border-green-600 text-green-700 hover:bg-green-50"
+                                title="Enviar WhatsApp"
+                              >
+                                <MessageSquare className="w-4 h-4" />
+                              </Button>
+                            )}
+                            {lead.email && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => window.location.href = `mailto:${lead.email}`}
+                                className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                                title="Enviar Email"
+                              >
+                                <Mail className="w-4 h-4" />
+                              </Button>
+                            )}
+                            {lead.website && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => window.open(lead.website, '_blank')}
+                                className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                                title="Ver Website"
+                              >
+                                <ExternalLink className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

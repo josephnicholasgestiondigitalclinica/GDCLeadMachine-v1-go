@@ -78,6 +78,58 @@ class EmailStats(BaseModel):
     failed: int
     active_accounts: int
 
+from services.whatsapp_service import whatsapp_service
+
+# WhatsApp endpoints
+@api_router.post("/whatsapp/send")
+async def send_whatsapp(clinic_id: str):
+    """Send WhatsApp message to a specific clinic"""
+    try:
+        # Get clinic data
+        clinic = await db.clinics.find_one({"_id": clinic_id})
+        if not clinic:
+            raise HTTPException(status_code=404, detail="Clinic not found")
+        
+        if not clinic.get('telefono'):
+            raise HTTPException(status_code=400, detail="Clinic has no phone number")
+        
+        result = await whatsapp_service.send_whatsapp_message(
+            clinic['telefono'],
+            clinic['clinica']
+        )
+        
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error sending WhatsApp: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/whatsapp/bulk")
+async def send_bulk_whatsapp(score_threshold: int = 7):
+    """Send WhatsApp messages to leads with high scores"""
+    try:
+        # Get high-scoring leads with phone numbers
+        leads = await db.clinics.find({
+            "score": {"$gte": score_threshold},
+            "telefono": {"$exists": True, "$ne": ""}
+        }).limit(50).to_list(50)
+        
+        if not leads:
+            return {"message": "No leads found with phone numbers"}
+        
+        result = await whatsapp_service.send_bulk_whatsapp(leads)
+        
+        return {
+            "message": "WhatsApp messages prepared",
+            "success": result['success'],
+            "failed": result['failed'],
+            "links": result.get('links', [])
+        }
+    except Exception as e:
+        logger.error(f"Error sending bulk WhatsApp: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Health check
 @api_router.get("/")
 async def root():
