@@ -104,8 +104,8 @@ const Login = () => {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-xs text-slate-500">
-            Credenciales por defecto: admin / Admin
+          <div className="mt-6 text-center text-xs text-slate-400">
+            Sistema de gestión de leads
           </div>
         </div>
       </div>

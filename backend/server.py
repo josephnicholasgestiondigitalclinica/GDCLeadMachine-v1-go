@@ -366,11 +366,16 @@ async def get_dashboard_stats():
 
 @api_router.post("/discovery/trigger")
 async def trigger_discovery():
-    """Manually trigger REAL lead discovery with web scraping"""
+    """Manually trigger lead discovery with Google Places API"""
     try:
         # Run discovery in background
         asyncio.create_task(discovery_scheduler_instance.run_discovery_cycle())
-        return {"message": "REAL lead discovery triggered (web scraping)", "status": "running"}
+        google_enabled = discovery_scheduler_instance.google_api_enabled
+        return {
+            "message": "Lead discovery triggered" + (" with Google Places API!" if google_enabled else ""),
+            "status": "running",
+            "google_places_enabled": google_enabled
+        }
     except Exception as e:
         logger.error(f"Error triggering discovery: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -380,8 +385,30 @@ async def get_discovery_status():
     """Get lead discovery status"""
     return {
         "is_running": discovery_scheduler_instance.is_running,
-        "scheduler_running": discovery_scheduler_instance.scheduler.running
+        "scheduler_running": discovery_scheduler_instance.scheduler.running,
+        "google_places_enabled": discovery_scheduler_instance.google_api_enabled
     }
+
+@api_router.post("/discovery/google-places")
+async def trigger_google_places_discovery(max_leads: int = 50):
+    """Manually trigger Google Places API discovery only"""
+    try:
+        if not discovery_scheduler_instance.google_api_enabled:
+            raise HTTPException(status_code=400, detail="Google API key not configured")
+        
+        # Run Google discovery
+        new_leads = await discovery_scheduler_instance.run_google_discovery(max_leads=max_leads)
+        
+        return {
+            "success": True,
+            "message": f"Google Places discovery completed",
+            "new_leads_found": new_leads
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in Google Places discovery: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # PDF Lead Import endpoint
 @api_router.post("/leads/import-pdf")
@@ -432,6 +459,10 @@ async def get_automation_status():
         
         return {
             "automation_active": True,
+            "google_places_api": {
+                "enabled": discovery_scheduler_instance.google_api_enabled,
+                "status": "ACTIVE - Real lead discovery!" if discovery_scheduler_instance.google_api_enabled else "Not configured"
+            },
             "discovery": {
                 "is_running": discovery_scheduler_instance.is_running,
                 "scheduler_active": discovery_scheduler_instance.scheduler.running,
