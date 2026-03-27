@@ -19,6 +19,7 @@ from services.email_service import email_service
 from services.email_queue_service import EmailQueueService
 from services.automation_service import automation_service
 from services.discovery_scheduler import DiscoveryScheduler
+from services.inbox_monitor_service import InboxMonitorService
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -54,6 +55,7 @@ from services.whatsapp_queue_service import WhatsAppQueueService
 email_queue_service_instance = EmailQueueService(db)
 whatsapp_queue_service_instance = WhatsAppQueueService(db)
 contact_history_service_instance = ContactHistoryService(db)
+inbox_monitor_service_instance = InboxMonitorService(db)
 
 automation_service.initialize(
     db, 
@@ -652,6 +654,54 @@ async def get_recent_contacts(limit: int = 50, method: Optional[str] = None):
         logger.error(f"Error getting recent contacts: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# Inbox monitor / bounce detection endpoints
+
+@api_router.get("/email/bounces")
+async def get_bounced_emails(skip: int = 0, limit: int = 50):
+    """List clinics whose outbound emails bounced back (invalid / non-existent address)"""
+    try:
+        clinics = await inbox_monitor_service_instance.get_bounced_clinics(skip=skip, limit=limit)
+        stats = await inbox_monitor_service_instance.get_bounce_stats()
+        clinics = convert_objectids(clinics)
+        return {
+            "bounced_clinics": clinics,
+            "count": len(clinics),
+            "stats": stats,
+        }
+    except Exception as e:
+        logger.error(f"Error fetching bounce list: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@api_router.post("/email/bounces/scan")
+async def trigger_bounce_scan():
+    """Manually trigger an IMAP inbox scan to detect new bounce messages"""
+    try:
+        result = await inbox_monitor_service_instance.scan_all_inboxes()
+        return {
+            "message": "Inbox scan completed",
+            "result": result,
+        }
+    except Exception as e:
+        logger.error(f"Error during bounce scan: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@api_router.post("/email/bounces/{clinic_id}/fix")
+async def apply_bounce_correction(clinic_id: str):
+    """Apply the AI-suggested email correction for a bounced clinic and re-queue the email"""
+    try:
+        result = await inbox_monitor_service_instance.apply_email_correction(clinic_id)
+        if not result.get("success"):
+            raise HTTPException(status_code=400, detail=result.get("message"))
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error applying bounce correction: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # Include router
 app.include_router(api_router)
 
@@ -680,6 +730,8 @@ async def startup_event():
         await db.clinics.create_index([("comunidad_autonoma", 1)])
         await db.clinics.create_index([("score", 1)])
         await db.clinics.create_index([("estado", 1)])
+        await db.clinics.create_index([("email_bounced", 1)])
+        await db.email_bounces.create_index([("bounced_email", 1)], unique=True)
         logger.info("Database indexes created successfully")
     except Exception as e:
         logger.warning(f"Index creation warning (may already exist): {str(e)}")
@@ -691,6 +743,9 @@ async def startup_event():
     whatsapp_queue_service_instance.start()
     logger.info("WhatsApp queue processor started - sending 1 message per 60 seconds")
     
+    # Start inbox monitor - detects bounced emails every 5 minutes
+    inbox_monitor_service_instance.start()
+    
     # Start lead discovery scheduler - 24/7 MODE
     discovery_scheduler_instance.start()
     logger.info("="*60)
@@ -698,6 +753,7 @@ async def startup_event():
     logger.info("📧 Email sending: Every 120 seconds")
     logger.info("📱 WhatsApp sending: Every 60 seconds") 
     logger.info("🔍 Lead processing: Every hour for 20 minutes")
+    logger.info("📬 Inbox monitor: Every 5 minutes (bounce detection)")
     logger.info("🌙 System works while you sleep!")
     logger.info("="*60)
 
@@ -706,6 +762,7 @@ async def shutdown_event():
     """Stop email queue processor and discovery scheduler on shutdown"""
     email_queue_service_instance.stop()
     whatsapp_queue_service_instance.stop()
+    inbox_monitor_service_instance.stop()
     discovery_scheduler_instance.stop()
     client.close()
     logger.info("Shutdown complete")
