@@ -10,6 +10,13 @@ Antes de deployar, necesitas:
 4. ✅ Cuentas de email SMTP configuradas
 5. ✅ Este repositorio en GitHub
 
+## ⚡ Railway (Nixpacks) - TL;DR
+
+- Ya está incluido `nixpacks.toml` + `Procfile` + `railway.json`. Railway instalará los requisitos de Python, compilará el frontend y lanzará `uvicorn`.
+- Añade las variables de `.env.example` en la pestaña **Variables** antes de desplegar (incluye `REACT_APP_BACKEND_URL=https://<tu-app>.up.railway.app`).
+- Dashboard: New Project → Deploy from GitHub → selecciona repo → Deploy.
+- CLI: `npm i -g @railway/cli && railway login && railway up`.
+
 ---
 
 ## Paso 1: Configurar MongoDB Atlas (5 minutos)

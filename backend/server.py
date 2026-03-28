@@ -1,5 +1,7 @@
 from fastapi import FastAPI, APIRouter, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
 from pathlib import Path
@@ -18,6 +20,7 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR.parent / '.env')
 load_dotenv(ROOT_DIR / '.env')
 load_dotenv(ROOT_DIR.parent / '.env.example')
+FRONTEND_BUILD_DIR = ROOT_DIR.parent / "frontend" / "build"
 
 # Import services
 from services.notion_service import notion_service
@@ -975,6 +978,23 @@ async def mcp_manifest():
 
 # Include router
 app.include_router(api_router)
+
+# Serve built frontend if present
+if FRONTEND_BUILD_DIR.exists():
+    app.mount("/", StaticFiles(directory=FRONTEND_BUILD_DIR, html=True), name="frontend")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_frontend(full_path: str):
+        # Let API routes surface 404s instead of returning index.html
+        if full_path.startswith("api"):
+            raise HTTPException(status_code=404)
+
+        index_file = FRONTEND_BUILD_DIR / "index.html"
+        if index_file.exists():
+            return FileResponse(index_file)
+        raise HTTPException(status_code=404, detail="Frontend build not found")
+else:
+    logger.warning("Frontend build directory not found; serving API only")
 
 # CORS
 app.add_middleware(

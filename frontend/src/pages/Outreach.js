@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -24,10 +24,6 @@ const Outreach = () => {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    filterEmails();
-  }, [emails, searchTerm, statusFilter]);
-
   const loadData = async () => {
     try {
       const [statsData, queueData] = await Promise.all([
@@ -43,7 +39,7 @@ const Outreach = () => {
     }
   };
 
-  const filterEmails = () => {
+  const filterEmails = useCallback(() => {
     let filtered = emails;
 
     // Filter by status
@@ -61,7 +57,11 @@ const Outreach = () => {
     }
 
     setFilteredEmails(filtered);
-  };
+  }, [emails, searchTerm, statusFilter]);
+
+  useEffect(() => {
+    filterEmails();
+  }, [filterEmails]);
 
   const getStatusIcon = (status) => {
     switch(status) {

@@ -16,38 +16,23 @@ Sistema automatizado de gestión de leads para clínicas de salud en España.
 
 ## 🚂 Deployment en Railway
 
-### Opción 1: Deploy desde Railway Dashboard
+`railway.json`, `Procfile` y `nixpacks.toml` ya están listos para Nixpacks. Railway hará automáticamente:
 
-1. **Conecta tu repositorio**
-   - Ve a [Railway](https://railway.app)
-   - Click "New Project"
-   - Selecciona "Deploy from GitHub repo"
-   - Autoriza y selecciona tu repositorio
+- `pip install -r backend/requirements.txt`
+- `npm ci && npm run build` dentro de `frontend/`
+- Arrancar FastAPI con Uvicorn sirviendo `/api` y la SPA desde `frontend/build`
 
-2. **Railway detectará automáticamente:**
-   - `railway.json` - Configuración
-   - `Procfile` - Start command
-   - `requirements.txt` - Backend dependencies
-   - `package.json` - Frontend dependencies
+### Pasos rápidos (Dashboard)
+1. Ve a [Railway](https://railway.app) → **New Project** → **Deploy from GitHub repo** y selecciona este repositorio.
+2. En **Variables**, añade todas las claves de `.env.example`. Asegúrate de fijar `REACT_APP_BACKEND_URL=https://<tu-app>.up.railway.app`.
+3. Railway construirá con Nixpacks y usará el `Procfile` para arrancar.
+4. Verifica: `/api/` debe devolver `{"status":"running"}` y `/` debe cargar el login.
 
-3. **Configura variables de entorno**
-   - Ve a Variables tab
-   - Añade todas las variables de `.env.example`
-
-### Opción 2: Deploy con Railway CLI
-
+### Pasos rápidos (CLI)
 ```bash
-# Instala Railway CLI
 npm i -g @railway/cli
-
-# Login
 railway login
-
-# Inicializa proyecto
-railway init
-
-# Deploy
-railway up
+railway up   # usa nixpacks.toml y Procfile automáticamente
 ```
 
 ---
@@ -58,6 +43,11 @@ railway up
 ```bash
 MONGO_URL=mongodb+srv://user:pass@cluster.mongodb.net/
 DB_NAME=gdc_database
+```
+
+### Frontend (OBLIGATORIO)
+```bash
+REACT_APP_BACKEND_URL=https://tu-app.up.railway.app
 ```
 
 ### Email Accounts (OBLIGATORIO)
