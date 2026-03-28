@@ -329,7 +329,7 @@ class TestWhatsAppAPI:
         print(f"✓ WhatsApp bulk endpoint: {data}")
 
 
-class TestTestRunAPI:
+class TestRunAPI:
     """Test-run tracking endpoint tests"""
 
     def test_mcp_manifest(self):
