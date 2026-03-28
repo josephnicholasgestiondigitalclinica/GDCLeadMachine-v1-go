@@ -789,7 +789,7 @@ async def apply_bounce_correction(clinic_id: str):
 # ---------------------------------------------------------------------------
 
 class TestRunStartRequest(BaseModel):
-    duration_hours: float = 2.0
+    duration_hours: float = Field(default=2.0, gt=0)
     notes: Optional[str] = None
 
 
