@@ -1025,6 +1025,7 @@ async def startup_event():
         await db.clinics.create_index([("email_bounced", 1)])
         await db.email_bounces.create_index([("bounced_email", 1)], unique=True)
         # Index for test run lookups
+        await db.test_runs.create_index([("run_id", 1)], unique=True)
         await db.test_runs.create_index([("started_at", -1)])
         await db.test_runs.create_index([("status", 1)])
         logger.info("Database indexes created successfully")
