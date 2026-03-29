@@ -34,11 +34,14 @@ class WhatsAppService:
         # Message template
         self.message_template = """Hola {clinic_name},
 
-Soy {owner} de {business}.
+Soy {owner} de {business}. He visto vuestra web y creo que podemos:
+- evitar huecos en agenda
+- reducir mensajes manuales por WhatsApp
+- confirmar mejor las citas
 
-Ayudamos a clínicas privadas a implantar un sistema integral que centraliza la gestión diaria (agenda, seguimiento, tareas) en un único entorno.
+No quiero complicaros: solo automatizar lo que ya hacéis (confirmaciones, no-shows, reservas/confirmaciones y pagos previos cuando toque).
 
-¿Tendríais 15 minutos esta semana para una llamada? Os explico cómo funciona sin compromiso.
+¿Te cuento en 10-15 minutos lo que cambiaría en vuestro caso? Lo vemos por llamada o te dejo un resumen por aquí.
 
 Saludos,
 {owner}
