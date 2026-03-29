@@ -32,141 +32,62 @@ class EmailService:
         }
     
     def _generate_email_body(self, clinic_name: str, personalization: Dict) -> str:
-        """Generate personalized email based on template"""
-        
+        """Generate the simplified outreach email body"""
+
+        clinic_display = clinic_name or personalization.get("clinica") or "la clínica"
+        ciudad = personalization.get("ciudad")
+        web_line = f"He estado viendo vuestra web de {clinic_display}"
+        if ciudad:
+            web_line += f" en {ciudad}"
+        web_line += " y cómo gestionáis las citas."
+
         html_body = f"""
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <style>
-        body {{
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-        }}
-        .container {{
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }}
-        .header {{
-            text-align: center;
-            margin-bottom: 30px;
-        }}
-        .logo {{
-            max-width: 200px;
-            height: auto;
-        }}
-        .content {{
-            margin-bottom: 30px;
-        }}
-        .section {{
-            margin: 20px 0;
-        }}
-        .section-title {{
-            color: #17a2b8;
-            font-weight: bold;
-            margin: 15px 0 10px 0;
-        }}
-        ul {{
-            margin: 10px 0;
-            padding-left: 20px;
-        }}
-        .signature {{
-            border-top: 2px solid #17a2b8;
-            padding-top: 20px;
-            margin-top: 30px;
-        }}
-        .signature-name {{
-            font-weight: bold;
-            color: #1e3a5f;
-        }}
-        .signature-title {{
-            color: #17a2b8;
-            font-weight: bold;
-        }}
-        .contact-info {{
-            margin-top: 10px;
-            font-size: 14px;
-        }}
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #1f2937; }}
+        .container {{ max-width: 640px; margin: 0 auto; padding: 16px; }}
+        h2 {{ color: #0f172a; margin-bottom: 8px; }}
+        ul {{ margin: 8px 0 16px 20px; padding: 0; }}
+        li {{ margin-bottom: 6px; }}
+        .signature {{ border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 24px; color: #475569; }}
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <img src="{self.business_info['logo_url']}" alt="GDC Logo" class="logo">
-        </div>
-        
-        <div class="content">
-            <p>Hola equipo de {clinic_name},</p>
-            
-            <p>Soy {self.business_info['owner']}, de {self.business_info['name']}.</p>
-            
-            <p>Ayudamos a clínicas privadas a implantar un sistema integral que centraliza la gestión diaria (agenda, seguimiento, tareas internas y procesos), para que todo quede en un único entorno y el equipo deje de trabajar con datos dispersos entre múltiples plataformas.</p>
-            
-            <div class="section">
-                <p class="section-title">Cómo trabajamos (sin venderte "si encaja o no"):</p>
-                <ol>
-                    <li>Nos facilitas información de vuestros procesos actuales y puntos de fricción.</li>
-                    <li>Realizamos un análisis del flujo de trabajo (especialmente tareas repetitivas y de alto consumo de tiempo).</li>
-                    <li>Redactamos un plan de diseño del sistema para reducir —y cuando sea posible eliminar— esa carga operativa dentro del marco viable.</li>
-                </ol>
-                <p><strong>Plazo objetivo:</strong> hasta 30 días máximo.</p>
-            </div>
-            
-            <div class="section">
-                <p class="section-title">Qué cubre el sistema (ejemplos típicos):</p>
-                <ul>
-                    <li><strong>No-shows:</strong> recordatorios/confirmaciones automáticas y registro de respuestas</li>
-                    <li><strong>Citación por WhatsApp automatizada,</strong> dentro y fuera del horario administrativo, liberando tiempo al equipo</li>
-                    <li><strong>Categorización previa del paciente</strong> dentro del flujo (para organizar y evitar fricción):
-                        <ul>
-                            <li>Asegurado / Mutua</li>
-                            <li>Privado</li>
-                            <li>Privado con pago realizado (confirmación tras pago)</li>
-                            <li>Privado con pago pendiente (se abona presencialmente el día de la cita)</li>
-                        </ul>
-                    </li>
-                    <li><strong>Operativa y trazabilidad:</strong> tablero de "qué toca hoy", pagos pendientes, tareas, y seguimiento</li>
-                    <li><strong>Garantía:</strong> diseñado para cumplir con las normativas vigentes de protección de datos aplicables</li>
-                </ul>
-            </div>
-            
-            <div class="section">
-                <p class="section-title">Gestión de roles, permisos y accesos (panel de administración):</p>
-                <ul>
-                    <li><strong>Administrador principal:</strong> alta de personal, asignación de roles y permisos</li>
-                    <li><strong>Administrador delegado:</strong> mismas capacidades para repartir carga y supervisión</li>
-                    <li><strong>Equipo de recepción y gestión administrativa:</strong> citación y gestión de no-shows, facturación, emisión de facturas, facturación a aseguradoras, contabilidad operativa y trazabilidad de pagos pendientes</li>
-                    <li><strong>Equipo médico:</strong> acceso a historia clínica de sus pacientes, redacción de informes, emisión de recetas, y otras funciones clínicas según el rol</li>
-                </ul>
-            </div>
-            
-            <div class="section">
-                <p class="section-title">Portal del paciente (acceso propio):</p>
-                <ul>
-                    <li>Ver informes, recetas e instrucciones elaboradas por el profesional</li>
-                    <li>Ver próxima cita y recordatorios para solicitar/renovar cita</li>
-                    <li>Ver facturas y estado de pagos</li>
-                    <li>Formulario para ejercer derechos del paciente según la normativa vigente</li>
-                </ul>
-            </div>
-            
-            <p>Si te parece bien podemos programar una llamada (o mantener contacto por correo como mejor sea) para comentar sobre el programa más a fondo y contestar cualquier duda que tenga.</p>
-        </div>
-        
+        <p>Hola {clinic_display},</p>
+
+        <p>{web_line}</p>
+
+        <p>En vuestro caso hay margen directo para mejorar sin cambiar cómo trabajáis:</p>
+        <ul>
+            <li>evitar huecos en agenda</li>
+            <li>reducir mensajes manuales por WhatsApp</li>
+            <li>confirmar mejor las citas y perder menos pacientes por el camino</li>
+        </ul>
+
+        <p>No se trata de meter un sistema complejo, sino de automatizar lo que ya hacéis para que funcione solo.</p>
+
+        <p>Por ejemplo:</p>
+        <ul>
+            <li>confirmaciones automáticas de citas y gestión básica de no-shows</li>
+            <li>pacientes que pueden reservar o confirmar sin depender siempre de vosotros</li>
+            <li>menos idas y vueltas por WhatsApp con mensajes preparados</li>
+            <li>opción de dejar citas ya confirmadas o pagadas antes de que lleguen</li>
+        </ul>
+
+        <p>En clínicas como la vuestra esto suele traducirse en menos gestión y más agenda llena sin aumentar horas.</p>
+
+        <p>Si quieres, puedo mirar vuestro caso concreto y decirte exactamente qué cambiaría yo, sin compromiso. Lo vemos por llamada o por aquí mismo si prefieres.</p>
+
         <div class="signature">
-            <p class="signature-name">{self.business_info['owner']}</p>
-            <p class="signature-title">{self.business_info['name']}</p>
-            <div class="contact-info">
-                <p>📧 {self.business_info['email']}</p>
-                <p>🌐 {self.business_info['website']}</p>
-                <p>📱 Tel/WhatsApp: {self.business_info['phone']}</p>
-            </div>
-            <div style="margin-top: 15px;">
-                <img src="{self.business_info['logo_url']}" alt="GDC Logo" style="max-width: 150px; height: auto;">
-            </div>
+            <p style="font-weight: 600; color: #0f172a;">{self.business_info['owner']}</p>
+            <p style="margin: 0;">{self.business_info['name']}</p>
+            <p style="margin: 0;">📧 {self.business_info['email']}</p>
+            <p style="margin: 0;">🌐 {self.business_info['website']}</p>
+            <p style="margin: 0;">📱 Tel/WhatsApp: {self.business_info['phone']}</p>
         </div>
     </div>
 </body>
@@ -185,11 +106,12 @@ class EmailService:
     ) -> bool:
         """Send personalized email to clinic"""
         try:
+            clinic_display = clinic_name or (personalization or {}).get("clinica") or "la clínica"
             # Create message
             msg = MIMEMultipart('alternative')
             msg['From'] = from_email
             msg['To'] = to_email
-            msg['Subject'] = f"Sistema integral para centralizar la operativa de {clinic_name}"
+            msg['Subject'] = f"Agenda y WhatsApp en {clinic_display}"
             
             # Generate personalized body
             html_body = self._generate_email_body(clinic_name, personalization or {})
