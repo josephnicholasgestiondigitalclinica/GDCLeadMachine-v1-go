@@ -1,15 +1,15 @@
 [phases.setup]
-nixPkgs = ["python311", "nodejs_18", "yarn"]
+nixPkgs = ["python311", "nodejs_18"]
 
 [phases.install]
 cmds = [
-  "source /etc/profile && cd backend && pip install -r requirements.txt",
-  "source /etc/profile && cd frontend && yarn install",
+  "cd backend && pip install -r requirements.txt",
+  "cd frontend && npm ci",
 ]
 
 [phases.build]
 cmds = [
-  "source /etc/profile && cd frontend && yarn build",
+  "cd frontend && CI=false npm run build",
 ]
 
 [start]
