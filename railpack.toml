@@ -1,0 +1,17 @@
+[options]
+# Tell Railpack where to find Python dependencies
+installDir = "backend"
+
+[phases.install]
+cmds = [
+  "pip install -r backend/requirements.txt",
+  "cd frontend && npm ci",
+]
+
+[phases.build]
+cmds = [
+  "cd frontend && CI=false npm run build",
+]
+
+[start]
+cmd = "sh -c 'cd backend && uvicorn server:app --host 0.0.0.0 --port ${PORT:-8080}'"
