@@ -1,11 +1,11 @@
 [install]
 # Install Python dependencies for the backend
-cmd = "cd backend && pip install -r requirements.txt"
+cmd = "pip install -r requirements.txt"
 
 [build]
 # Build the frontend
-cmd = "cd frontend && npm ci && CI=false npm run build"
+cmd = "npm ci && CI=false npm run build"
 
 [start]
 # Start the backend server
-cmd = "cd backend && uvicorn server:app --host 0.0.0.0 --port $PORT"
+cmd = "uvicorn server:app --host 0.0.0.0 --port $PORT"
