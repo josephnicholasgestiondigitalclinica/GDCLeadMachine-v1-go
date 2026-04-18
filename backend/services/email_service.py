@@ -53,6 +53,7 @@ class EmailService:
         ul {{ margin: 8px 0 16px 20px; padding: 0; }}
         li {{ margin-bottom: 6px; }}
         .signature {{ border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 24px; color: #475569; }}
+        .ai-badge {{ color: #6b7280; font-size: 0.75rem; margin-top: 8px; }}
     </style>
 </head>
 <body>
@@ -94,29 +95,94 @@ class EmailService:
 </html>
 """
         return html_body
+
+    async def _generate_ai_email(self, clinic_name: str, personalization: Dict) -> Optional[Dict]:
+        """Try to generate email using Gemini AI, return None if not available"""
+        try:
+            from services.gemini_ai_service import gemini_ai_service
+
+            if not gemini_ai_service.is_configured:
+                return None
+
+            clinic_data = {
+                "clinica": clinic_name or personalization.get("clinica", ""),
+                "ciudad": personalization.get("ciudad", ""),
+                "website": personalization.get("website", ""),
+                "telefono": personalization.get("telefono", "")
+            }
+
+            result = await gemini_ai_service.generate_personalized_email(
+                clinic_data,
+                self.business_info
+            )
+
+            if result.get("available", False):
+                return result
+
+        except Exception as e:
+            logger.debug(f"AI email generation not available: {str(e)}")
+
+        return None
     
     async def send_email(
-        self, 
-        to_email: str, 
+        self,
+        to_email: str,
         clinic_name: str,
         from_email: str,
         from_password: str,
         attachment_path: Optional[str] = None,
-        personalization: Optional[Dict] = None
+        personalization: Optional[Dict] = None,
+        use_ai: bool = True
     ) -> bool:
-        """Send personalized email to clinic"""
+        """Send personalized email to clinic - optionally using Gemini AI"""
         try:
             clinic_display = clinic_name or (personalization or {}).get("clinica") or "la clínica"
+
+            # Try AI generation first if enabled
+            email_subject = f"Agenda y WhatsApp en {clinic_display}"
+            html_body = None
+
+            if use_ai:
+                ai_result = await self._generate_ai_email(clinic_name, personalization or {})
+                if ai_result and ai_result.get("available"):
+                    email_subject = ai_result.get("subject", email_subject)
+                    body_text = ai_result.get("body", "")
+
+                    # Wrap AI-generated text in HTML template
+                    html_body = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #1f2937; }}
+        .container {{ max-width: 640px; margin: 0 auto; padding: 16px; }}
+        .signature {{ border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 24px; color: #475569; }}
+        .ai-badge {{ color: #6b7280; font-size: 0.75rem; margin-top: 8px; font-style: italic; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        {body_text}
+        <div class="ai-badge">✨ Personalizado con Google Gemini AI</div>
+    </div>
+</body>
+</html>
+"""
+                    logger.info(f"Using Gemini AI-generated email for {clinic_display}")
+
+            # Fallback to template if AI not used or failed
+            if not html_body:
+                html_body = self._generate_email_body(clinic_name, personalization or {})
+
             # Create message
             msg = MIMEMultipart('alternative')
             msg['From'] = from_email
             msg['To'] = to_email
-            msg['Subject'] = f"Agenda y WhatsApp en {clinic_display}"
-            
-            # Generate personalized body
-            html_body = self._generate_email_body(clinic_name, personalization or {})
+            msg['Subject'] = email_subject
+
             msg.attach(MIMEText(html_body, 'html'))
-            
+
             # Add attachment if provided
             if attachment_path and os.path.exists(attachment_path):
                 with open(attachment_path, 'rb') as f:
@@ -128,7 +194,7 @@ class EmailService:
                         f'attachment; filename={os.path.basename(attachment_path)}'
                     )
                     msg.attach(part)
-            
+
             # Send email
             await aiosmtplib.send(
                 msg,
@@ -138,10 +204,10 @@ class EmailService:
                 password=from_password,
                 use_tls=True
             )
-            
+
             logger.info(f"Email sent successfully to {to_email} from {from_email}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Error sending email to {to_email}: {str(e)}")
             return False

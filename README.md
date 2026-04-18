@@ -9,8 +9,9 @@ Sistema automatizado de gestión de leads para clínicas de salud en España.
 - Cuenta de Railway
 - MongoDB Atlas (o cualquier MongoDB cloud)
 - Cuentas de email SMTP configuradas
+- **Google Gemini API Key** (recomendado para AI)
 - Notion API key (opcional)
-- Emergent LLM Key
+- Google Places API Key (para discovery automático)
 
 ---
 
@@ -63,9 +64,17 @@ IMAP_HOST=imap.yourdomain.com
 IMAP_PORT=993
 ```
 
-### AI Configuration (OBLIGATORIO)
+### AI Configuration (RECOMENDADO)
 ```bash
+# Google Gemini AI (Primary - Best performance)
+GOOGLE_GEMINI_API_KEY=your_google_gemini_api_key
+GEMINI_MODEL=gemini-1.5-flash
+
+# Emergent LLM (Fallback)
 EMERGENT_LLM_KEY=your_emergent_llm_key
+
+# Google Places API (for lead discovery)
+GOOGLE_API_KEY=your_google_places_api_key
 ```
 
 ### Business Info (OBLIGATORIO)

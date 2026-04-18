@@ -192,9 +192,24 @@ class AIScoringService:
         return score, details
     
     async def _ai_verify(self, clinic_data: Dict) -> Dict:
-        """Use AI to verify clinic authenticity"""
+        """Use AI to verify clinic authenticity - now powered by Google Gemini"""
         try:
-            prompt = f"""Analiza esta clínica y determina si es un buen prospecto para servicios de gestión digital clínica:
+            # Try Gemini first (preferred)
+            from services.gemini_ai_service import gemini_ai_service
+
+            if gemini_ai_service.is_configured:
+                result = await gemini_ai_service.score_clinic_with_ai(clinic_data)
+                if result.get("available", False):
+                    score = result.get("score", 1)
+                    reason = result.get("reason", "Verificado por IA")
+                    return {
+                        "score": score,
+                        "details": [f"Gemini AI: {reason} (+{score})"]
+                    }
+
+            # Fallback to OpenAI/Emergent if Gemini not available
+            if self.llm_key:
+                prompt = f"""Analiza esta clínica y determina si es un buen prospecto para servicios de gestión digital clínica:
 
 Clínica: {clinic_data.get('clinica', '')}
 Ciudad: {clinic_data.get('ciudad', '')}
@@ -212,37 +227,37 @@ Criterios:
 Responde SOLO con un número del 1-3 y una razón breve (máximo 20 palabras):
 Formato: SCORE:X|RAZÓN:tu razón aquí"""
 
-            async with aiohttp.ClientSession() as session:
-                headers = {"Authorization": f"Bearer {self.llm_key}"}
-                payload = {
-                    "model": "gpt-4o-mini",
-                    "messages": [{"role": "user", "content": prompt}],
-                    "max_tokens": 100
-                }
-                
-                async with session.post(
-                    "https://api.openai.com/v1/chat/completions",
-                    headers=headers,
-                    json=payload
-                ) as response:
-                    if response.status == 200:
-                        result = await response.json()
-                        content = result["choices"][0]["message"]["content"]
-                        
-                        # Parse response
-                        score_match = re.search(r"SCORE:(\d+)", content)
-                        reason_match = re.search(r"RAZÓN:(.+)", content)
-                        
-                        score = int(score_match.group(1)) if score_match else 1
-                        reason = reason_match.group(1).strip() if reason_match else "Verificado por IA"
-                        
-                        return {
-                            "score": score,
-                            "details": [f"IA: {reason} (+{score})"]
-                        }
+                async with aiohttp.ClientSession() as session:
+                    headers = {"Authorization": f"Bearer {self.llm_key}"}
+                    payload = {
+                        "model": "gpt-4o-mini",
+                        "messages": [{"role": "user", "content": prompt}],
+                        "max_tokens": 100
+                    }
+
+                    async with session.post(
+                        "https://api.openai.com/v1/chat/completions",
+                        headers=headers,
+                        json=payload
+                    ) as response:
+                        if response.status == 200:
+                            result = await response.json()
+                            content = result["choices"][0]["message"]["content"]
+
+                            # Parse response
+                            score_match = re.search(r"SCORE:(\d+)", content)
+                            reason_match = re.search(r"RAZÓN:(.+)", content)
+
+                            score = int(score_match.group(1)) if score_match else 1
+                            reason = reason_match.group(1).strip() if reason_match else "Verificado por IA"
+
+                            return {
+                                "score": score,
+                                "details": [f"OpenAI: {reason} (+{score})"]
+                            }
         except Exception as e:
             logger.error(f"AI verification error: {str(e)}")
-        
+
         return {"score": 1, "details": ["Verificación IA no disponible"]}
 
 ai_scoring_service = AIScoringService()
