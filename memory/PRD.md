@@ -18,12 +18,14 @@ Automated 24/7 lead generation system for medical clinics in Spain. The system d
 - WhatsApp queue ready (API-based or link-based)
 - Fully autonomous - works while you sleep!
 
-### 3. AI Lead Scoring ✅ ACTIVE
-- Uses Emergent LLM for intelligent scoring (1-10)
+### 3. AI Lead Scoring ✅ ACTIVE - NOW POWERED BY GOOGLE GEMINI
+- Uses **Google Gemini 1.5 Flash** for intelligent scoring (1-10)
+- Fallback to Emergent LLM/OpenAI if Gemini not configured
 - Filters out large chains: Quironsalud, Sanitas, Vithas, HM, etc.
 - Prioritizes small private clinics
 - Bonus for personal emails (gmail, hotmail)
 - Score ≥5 = auto-queued for outreach
+- **NEW**: AI-powered personalized email generation
 
 ### 4. Multi-Channel Outreach ✅ ACTIVE
 - **Email**: Automated sending with personalization
@@ -97,11 +99,23 @@ EMAIL_1_USERNAME=info@gestiondigitalclinica.com
 EMAIL_1_PASSWORD=xxx
 EMAIL_2_USERNAME=info@gestiondigitalclinica.eu
 EMAIL_2_PASSWORD=xxx
-EMERGENT_LLM_KEY=sk-emergent-xxx
-GOOGLE_API_KEY=AIzaSyxxx (ACTIVE!)
+EMERGENT_LLM_KEY=sk-emergent-xxx (fallback AI)
+GOOGLE_GEMINI_API_KEY=AIza... (PRIMARY AI - NEW!)
+GEMINI_MODEL=gemini-1.5-flash
+GOOGLE_API_KEY=AIzaSyxxx (for Places API)
 ```
 
 ## Changelog
+
+### 2026-04-18
+- **MAJOR**: Integrated Google Gemini AI as primary AI engine
+- Added `gemini_ai_service.py` with Gemini 1.5 Flash model
+- AI-powered lead scoring (0-3 scale, more precise filtering)
+- AI-powered personalized email generation for each clinic
+- Fallback system: Gemini → OpenAI/Emergent → Template
+- Updated requirements.txt with google-generativeai SDK
+- Added `test_gemini.py` for testing AI integration
+- Updated documentation with Gemini configuration
 
 ### 2026-03-23
 - Added Google Places API integration for REAL lead discovery
