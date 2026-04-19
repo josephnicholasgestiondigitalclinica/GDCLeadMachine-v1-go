@@ -17,24 +17,34 @@ Sistema automatizado de gestión de leads para clínicas de salud en España.
 
 ## 🚂 Deployment en Railway
 
-`railway.json`, `Procfile` y `nixpacks.toml` ya están listos para Nixpacks. Railway hará automáticamente:
+Este proyecto usa **Docker** para deployment en Railway. El `Dockerfile` y `railway.json` están configurados para un build optimizado multi-stage.
 
-- `pip install -r backend/requirements.txt`
-- `npm ci && npm run build` dentro de `frontend/`
-- Arrancar FastAPI con Uvicorn sirviendo `/api` y la SPA desde `frontend/build`
+### Lo que Railway hace automáticamente:
+- Build del frontend React con Node.js 18
+- Instalación de dependencias Python del backend
+- Creación de imagen Docker optimizada con multi-stage build
+- Deploy con reinicio automático en caso de fallo
 
 ### Pasos rápidos (Dashboard)
 1. Ve a [Railway](https://railway.app) → **New Project** → **Deploy from GitHub repo** y selecciona este repositorio.
-2. En **Variables**, añade todas las claves de `.env.example`. Asegúrate de fijar `REACT_APP_BACKEND_URL=https://<tu-app>.up.railway.app`.
-3. Railway construirá con Nixpacks y usará el `Procfile` para arrancar.
-4. Verifica: `/api/` debe devolver `{"status":"running"}` y `/` debe cargar el login.
+2. Railway detectará automáticamente el `Dockerfile` y lo usará para el build.
+3. En **Variables**, añade todas las claves de `.env.example`. Asegúrate de fijar `REACT_APP_BACKEND_URL=https://<tu-app>.up.railway.app`.
+4. Railway construirá la imagen Docker automáticamente.
+5. Verifica: `/api/` debe devolver `{"status":"running"}` y `/` debe cargar el login.
 
 ### Pasos rápidos (CLI)
 ```bash
 npm i -g @railway/cli
 railway login
-railway up   # usa nixpacks.toml y Procfile automáticamente
+railway up   # usa Dockerfile automáticamente
 ```
+
+### Características del Docker build:
+- ✅ Multi-stage build para imagen optimizada (~200MB final)
+- ✅ Layer caching para builds más rápidos
+- ✅ Non-root user para mayor seguridad
+- ✅ Health check integrado
+- ✅ `.dockerignore` para excluir archivos innecesarios
 
 ---
 
