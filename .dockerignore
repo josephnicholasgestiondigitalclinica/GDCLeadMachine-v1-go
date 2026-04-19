@@ -1,0 +1,75 @@
+# Git
+.git
+.gitignore
+.gitconfig
+
+# CI/CD
+.github
+
+# Documentation
+*.md
+!README.md
+
+# Development files
+.env
+.env.local
+.env.*.local
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Node modules and cache
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn
+
+# Frontend development
+frontend/.cache
+frontend/coverage
+frontend/.DS_Store
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info
+.pytest_cache
+.coverage
+htmlcov
+venv
+env
+ENV
+
+# Build artifacts (we'll build in Docker)
+frontend/build
+
+# Temporary files
+tmp
+temp
+*.tmp
+.cache
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Railway/deployment configs (not needed in image)
+railway.json
+nixpacks.toml
+railpack.toml
+
+# Test files
+backend/tests
+*_test.py
+test_*.py
